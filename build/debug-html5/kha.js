@@ -119,18 +119,283 @@ Main.main = function() {
 	});
 };
 Math.__name__ = true;
+var ohgs_Object = function(x,y,width,height) {
+	this.active = true;
+	this.position = new kha_math_Vector2(x,y);
+	this.width = width;
+	this.height = height;
+	this.center = new kha_math_Vector2(width / 2,height / 2);
+	this.activate(x,y);
+};
+$hxClasses["ohgs.Object"] = ohgs_Object;
+ohgs_Object.__name__ = true;
+ohgs_Object.prototype = {
+	position: null
+	,width: null
+	,height: null
+	,center: null
+	,active: null
+	,update: function() {
+		if(!this.active) {
+			return;
+		}
+		this.center.x = this.width / 2;
+		this.center.y = this.height / 2;
+	}
+	,render: function(graphics) {
+		if(!this.active) {
+			return;
+		}
+	}
+	,activate: function(x,y) {
+		this.set_active(true);
+	}
+	,deactivate: function() {
+		this.set_active(false);
+	}
+	,set_active: function(value) {
+		return this.active = value;
+	}
+	,__class__: ohgs_Object
+};
+var ohgs_Entity = function(x,y,width,height) {
+	this.platformer = false;
+	this.onGround = false;
+	this.acceleration = 0.3;
+	this.speed = 3.0;
+	this.velocity = new kha_math_Vector2();
+	ohgs_Object.call(this,x,y,width,height);
+};
+$hxClasses["ohgs.Entity"] = ohgs_Entity;
+ohgs_Entity.__name__ = true;
+ohgs_Entity.__super__ = ohgs_Object;
+ohgs_Entity.prototype = $extend(ohgs_Object.prototype,{
+	velocity: null
+	,speed: null
+	,acceleration: null
+	,onGround: null
+	,collision: null
+	,platformer: null
+	,update: function() {
+		ohgs_Object.prototype.update.call(this);
+		this.position.x += this.velocity.x * this.speed;
+		this.position.y += this.velocity.y * this.speed;
+	}
+	,collideRect: function(entity) {
+		this.checkRectCollision();
+		var dx = this.position.x + this.width / 2 - (entity.position.x + entity.width / 2);
+		var dy = this.position.y + this.height / 2 - (entity.position.x + entity.height / 2);
+		var combined_x = 0;
+		var combined_y = 0;
+		combined_x = this.center.x + entity.center.x;
+		combined_y = this.center.y + entity.center.y;
+		if(Math.abs(dx) < combined_x) {
+			if(Math.abs(dy) < combined_y) {
+				var overlap_x = 0;
+				var overlap_y = 0;
+				overlap_x = combined_x - Math.abs(dx);
+				overlap_y = combined_y - Math.abs(dy);
+				if(overlap_x >= overlap_y) {
+					if(dy > 0) {
+						this.collision = 1;
+						this.position.y += overlap_y;
+					} else {
+						this.collision = 2;
+						this.position.y -= overlap_y;
+					}
+				} else if(dx > 0) {
+					this.collision = 3;
+					this.position.x += overlap_x;
+				} else {
+					this.collision = 4;
+					this.position.x -= overlap_x;
+				}
+			} else {
+				this.collision = 0;
+			}
+		} else {
+			this.collision = 0;
+		}
+		return false;
+	}
+	,checkRectCollision: function() {
+		if(this.collision == 2 && this.velocity.y >= 0) {
+			this.onGround = true;
+			this.velocity.y = 0;
+		} else if(this.collision == 1 && this.velocity.y <= 0) {
+			this.onGround = false;
+			this.velocity.y = 0;
+		} else if(this.collision == 4 && this.velocity.x >= 0) {
+			this.onGround = false;
+			this.velocity.x = 0;
+		} else if(this.collision == 3 && this.velocity.x <= 0) {
+			this.onGround = false;
+			this.velocity.x = 0;
+		}
+		if(this.collision != 2 && this.velocity.y > 0) {
+			this.onGround = false;
+		}
+	}
+	,__class__: ohgs_Entity
+});
+var Platform = function(x,y,width,height) {
+	ohgs_Entity.call(this,x,y,width,height);
+};
+$hxClasses["Platform"] = Platform;
+Platform.__name__ = true;
+Platform.__super__ = ohgs_Entity;
+Platform.prototype = $extend(ohgs_Entity.prototype,{
+	update: function() {
+		ohgs_Entity.prototype.update.call(this);
+	}
+	,render: function(graphics) {
+		ohgs_Entity.prototype.render.call(this,graphics);
+		graphics.set_color(-16711936);
+		graphics.fillRect(this.position.x,this.position.y,this.width,this.height);
+	}
+	,__class__: Platform
+});
+var Player = function(x,y,width,height) {
+	this.jumpValue = -6;
+	ohgs_Entity.call(this,x,y,width,height);
+	this.platformer = false;
+};
+$hxClasses["Player"] = Player;
+Player.__name__ = true;
+Player.__super__ = ohgs_Entity;
+Player.prototype = $extend(ohgs_Entity.prototype,{
+	up: null
+	,down: null
+	,left: null
+	,right: null
+	,jump: null
+	,jumpValue: null
+	,update: function() {
+		ohgs_Entity.prototype.update.call(this);
+		if(!this.platformer) {
+			if(this.up) {
+				this.velocity.y = -1;
+			} else if(this.down) {
+				this.velocity.y = 1;
+			} else {
+				this.velocity.y = 0;
+			}
+		}
+		if(this.left) {
+			this.velocity.x = -1;
+		} else if(this.right) {
+			this.velocity.x = 1;
+		} else {
+			this.velocity.x = 0;
+		}
+		if(this.platformer) {
+			this.velocity.y += this.acceleration;
+		}
+	}
+	,render: function(graphics) {
+		ohgs_Entity.prototype.render.call(this,graphics);
+		graphics.set_color(-16181);
+		graphics.fillRect(this.position.x,this.position.y,this.width,this.height);
+	}
+	,onKeyUp: function(keyCode) {
+		switch(keyCode) {
+		case 32:
+			this.jump = false;
+			break;
+		case 37:
+			this.left = false;
+			break;
+		case 38:
+			this.up = false;
+			break;
+		case 39:
+			this.right = false;
+			break;
+		case 40:
+			this.down = false;
+			break;
+		default:
+			return;
+		}
+	}
+	,onKeyDown: function(keyCode) {
+		switch(keyCode) {
+		case 32:
+			this.jump = true;
+			break;
+		case 37:
+			this.left = true;
+			break;
+		case 38:
+			this.up = true;
+			break;
+		case 39:
+			this.right = true;
+			break;
+		case 40:
+			this.down = true;
+			break;
+		default:
+			return;
+		}
+	}
+	,__class__: Player
+});
 var Project = function() {
-	var print = new ohgs_Printer();
+	this.amount = 30;
+	this.player = new Player(Main.WIDTH / 2,128,32,32);
+	this.setupPlatform();
+	kha_input_Keyboard.get().notify($bind(this,this.onKeyDown),$bind(this,this.onKeyUp));
 };
 $hxClasses["Project"] = Project;
 Project.__name__ = true;
 Project.prototype = {
-	update: function() {
+	player: null
+	,arPlatform: null
+	,amount: null
+	,update: function() {
+		this.player.update();
+		var _g = 0;
+		var _g1 = this.arPlatform;
+		while(_g < _g1.length) {
+			var platform = _g1[_g];
+			++_g;
+			this.player.collideRect(platform);
+			if(this.player.onGround && this.player.jump) {
+				this.player.velocity.y = this.player.jumpValue;
+				this.player.onGround = false;
+			}
+		}
 	}
 	,render: function(framebuffer) {
 		var graphics = framebuffer.get_g2();
 		graphics.begin();
+		this.player.render(graphics);
+		var _g = 0;
+		var _g1 = this.arPlatform;
+		while(_g < _g1.length) {
+			var platform = _g1[_g];
+			++_g;
+			platform.render(graphics);
+		}
 		graphics.end();
+	}
+	,onKeyDown: function(keyCode) {
+		this.player.onKeyDown(keyCode);
+	}
+	,onKeyUp: function(keyCode) {
+		this.player.onKeyUp(keyCode);
+	}
+	,setupPlatform: function() {
+		this.arPlatform = [];
+		var _g = 0;
+		var _g1 = this.amount;
+		while(_g < _g1) {
+			var i = _g++;
+			var platform = this.arPlatform[i];
+			platform = new Platform(ohgs_tool_Util.randomRangeFloat(0,Main.WIDTH),ohgs_tool_Util.randomRangeFloat(256,Main.HEIGHT),ohgs_tool_Util.randomRangeFloat(64,256),ohgs_tool_Util.randomRangeFloat(8,64));
+			this.arPlatform.push(platform);
+		}
 	}
 	,__class__: Project
 };
@@ -22553,17 +22818,14 @@ kha_vr_TimeWarpParms.prototype = {
 	,RightOverlay: null
 	,__class__: kha_vr_TimeWarpParms
 };
-var ohgs_Printer = function() {
-	haxe_Log.trace("this is printing",{ fileName : "Sources/ohgs/Printer.hx", lineNumber : 11, className : "ohgs.Printer", methodName : "new"});
-};
-$hxClasses["ohgs.Printer"] = ohgs_Printer;
-ohgs_Printer.__name__ = true;
-ohgs_Printer.prototype = {
-	update: function() {
-	}
-	,render: function(graphics) {
-	}
-	,__class__: ohgs_Printer
+var ohgs_tool_Direction = function() { };
+$hxClasses["ohgs.tool.Direction"] = ohgs_tool_Direction;
+ohgs_tool_Direction.__name__ = true;
+var ohgs_tool_Util = function() { };
+$hxClasses["ohgs.tool.Util"] = ohgs_tool_Util;
+ohgs_tool_Util.__name__ = true;
+ohgs_tool_Util.randomRangeFloat = function(min,max) {
+	return Math.floor(Math.random() * (1 + max - min)) + min;
 };
 function $getIterator(o) { if( o instanceof Array ) return HxOverrides.iter(o); else return o.iterator(); }
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $global.$haxeUID++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = m.bind(o); o.hx__closures__[m.__id__] = f; } return f; }
@@ -22824,6 +23086,11 @@ kha_netsync_Session.RPC_SERVER = 0;
 kha_netsync_Session.RPC_ALL = 1;
 kha_netsync_SyncBuilder.nextId = 0;
 kha_netsync_SyncBuilder.objects = [];
+ohgs_tool_Direction.UP = 1;
+ohgs_tool_Direction.DOWN = 2;
+ohgs_tool_Direction.LEFT = 3;
+ohgs_tool_Direction.RIGHT = 4;
+ohgs_tool_Direction.NONE = 0;
 Main.main();
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
 

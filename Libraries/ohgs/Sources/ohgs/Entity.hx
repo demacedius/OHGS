@@ -25,7 +25,7 @@ class Entity extends Object{
         position.y += velocity.y * speed;
     }
 
-    function collideRect(entity:Entity):Bool {
+    public function collideRect(entity:Entity):Bool {
         checkRectCollision();
         var dx =(this.position.x + this.width/2 ) - (entity.position.x + entity.width/2);
         var dy =(this.position.y + this.height/2 ) - (entity.position.x + entity.height/2);
