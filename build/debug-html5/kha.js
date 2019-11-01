@@ -258,7 +258,7 @@ Platform.prototype = $extend(ohgs_Entity.prototype,{
 var Player = function(x,y,width,height) {
 	this.jumpValue = -6;
 	ohgs_Entity.call(this,x,y,width,height);
-	this.platformer = false;
+	this.platformer = true;
 };
 $hxClasses["Player"] = Player;
 Player.__name__ = true;
@@ -297,27 +297,6 @@ Player.prototype = $extend(ohgs_Entity.prototype,{
 		graphics.set_color(-16181);
 		graphics.fillRect(this.position.x,this.position.y,this.width,this.height);
 	}
-	,onKeyUp: function(keyCode) {
-		switch(keyCode) {
-		case 32:
-			this.jump = false;
-			break;
-		case 37:
-			this.left = false;
-			break;
-		case 38:
-			this.up = false;
-			break;
-		case 39:
-			this.right = false;
-			break;
-		case 40:
-			this.down = false;
-			break;
-		default:
-			return;
-		}
-	}
 	,onKeyDown: function(keyCode) {
 		switch(keyCode) {
 		case 32:
@@ -334,6 +313,27 @@ Player.prototype = $extend(ohgs_Entity.prototype,{
 			break;
 		case 40:
 			this.down = true;
+			break;
+		default:
+			return;
+		}
+	}
+	,onKeyUp: function(keyCode) {
+		switch(keyCode) {
+		case 32:
+			this.jump = false;
+			break;
+		case 37:
+			this.left = false;
+			break;
+		case 38:
+			this.up = false;
+			break;
+		case 39:
+			this.right = false;
+			break;
+		case 40:
+			this.down = false;
 			break;
 		default:
 			return;

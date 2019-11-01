@@ -12,9 +12,9 @@ import Player;
 import Platform;
 
 class Project {
-	public var player:Player;
-	public var arPlatform:Array<Platform>;
-	public var amount = 30;
+	 var player:Player;
+	 var arPlatform:Array<Platform>;
+	 var amount = 30;
 
 	public function new(){
 		player = new Player(Main.WIDTH/2, 128, 32, 32);

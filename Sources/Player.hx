@@ -1,5 +1,4 @@
-import kha.input.Keyboard;
-import haxe.macro.Expr.Case;
+
 import kha.graphics2.Graphics;
 using kha.graphics2.GraphicsExtension;
 import kha.Color;
@@ -19,7 +18,7 @@ class Player extends Entity {
     public function new(x:Float, y:Float, width:Float, height:Float) {
         super(x,y, width, height);
 
-        platformer = false;
+        platformer = true;
     }
 
     override function update() {
@@ -55,6 +54,17 @@ class Player extends Entity {
         graphics.fillRect(position.x, position.y, width, height);
     }
 
+    public function onKeyDown(keyCode:KeyCode) {
+       switch(keyCode){
+           case KeyCode.Up: up = true;
+           case KeyCode.Down: down = true;
+           case KeyCode.Left: left = true;
+           case KeyCode.Right: right = true;
+           case KeyCode.Space: jump = true;
+           default: return;
+       }
+        
+    }
     public function onKeyUp(keyCode:KeyCode) {
        switch(keyCode){
            case KeyCode.Up: up = false;
@@ -67,15 +77,4 @@ class Player extends Entity {
         
     }
 
-    public function onKeyDown(keyCode:KeyCode) {
-       switch(keyCode){
-           case KeyCode.Up: up = true;
-           case KeyCode.Down: down = true;
-           case KeyCode.Left: left = true;
-           case KeyCode.Right: right = true;
-           case KeyCode.Space: jump = true;
-           default: return;
-       }
-        
-    }
 }
